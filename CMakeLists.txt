@@ -15,10 +15,6 @@ project(ton_client VERSION ${TC_VERSION_STRING} LANGUAGES C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
 
-set(TON_SDK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/build/ton-sdk-${TC_VERSION_FULL}/src/ton-sdk")
-set(TON_SDK_CLIENT_DIR "${TON_SDK_SRC}/ton_client/client")
-set(TON_SDK_RELEASE_DIR "${TON_SDK_SRC}/target/${TON_SDK_TARGET}/release")
-
 message(STATUS "Begin cmaking of PHP extension ...")
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -36,6 +32,8 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb -O0 -Wall -std=gnu99 -fvis
 
 set(PHP_VERSION 7.4.1)
 set(PHP_SRC_PATH "../..")
+
+list(APPEND CMAKE_PREFIX_PATH "${PHP_SRC_PATH}")
 
 include_directories(
         "${PHP_SRC_PATH}"
@@ -62,6 +60,12 @@ endif ()
 find_package(TON REQUIRED)
 
 add_library(ton_client SHARED ${SOURCE_FILES})
+
+set_target_properties(ton_client PROPERTIES
+        C_VISIBILITY_PRESET hidden
+        COMPILE_DEFINITIONS "PHP_WIN32"
+        VERSION ${TC_VERSION_STRING}
+        SOVERSION ${TC_VERSION_MAJOR})
 
 target_link_libraries(ton_client TON::Client)
 

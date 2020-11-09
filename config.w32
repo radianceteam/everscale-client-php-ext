@@ -1,7 +1,13 @@
-ARG_WITH('ton_client', 'ton_client support', 'no');
+ARG_ENABLE('ton_client', 'ton_client support', 'no');
 
 if (PHP_TON_CLIENT != 'no') {
-	AC_DEFINE('HAVE_TON_CLIENT', 1, 'ton_client support enabled');
-
-	EXTENSION('ton_client', 'ton_client.c', true, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+    if (CHECK_LIB("ton_client.dll.lib", "ton_client", '.\\lib') &&
+            CHECK_HEADER_ADD_INCLUDE("tonclient.h", "CFLAGS_TON_CLIENT", '.\\include')
+        ) {
+        AC_DEFINE('HAVE_TON_CLIENT', 1, 'ton_client support enabled');
+        AC_DEFINE('TON_DEBUG', 1);
+        EXTENSION('ton_client', 'ton_client.c', true, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+    } else {
+        WARNING("ton_client not enabled; libraries and headers not found");
+    }
 }
