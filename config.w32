@@ -1,0 +1,7 @@
+ARG_ENABLE('ton_client', 'ton_client support', 'no');
+
+if (PHP_TON_CLIENT != 'no') {
+	AC_DEFINE('HAVE_TON_CLIENT', 1, 'ton_client support enabled');
+
+	EXTENSION('ton_client', 'ton_client.c', true, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
