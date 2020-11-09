@@ -3,20 +3,10 @@ dnl config.m4 for extension ton_client
 dnl Comments in this file start with the string 'dnl'.
 dnl Remove where necessary.
 
-dnl If your extension references something external, use 'with':
-
-dnl PHP_ARG_WITH([ton_client],
-dnl   [for ton_client support],
-dnl   [AS_HELP_STRING([--with-ton_client],
-dnl     [Include ton_client support])])
-
-dnl Otherwise use 'enable':
-
-PHP_ARG_ENABLE([ton_client],
-  [whether to enable ton_client support],
-  [AS_HELP_STRING([--enable-ton_client],
-    [Enable ton_client support])],
-  [no])
+PHP_ARG_WITH([ton_client],
+   [for ton_client support],
+   [AS_HELP_STRING([--with-ton_client],
+     [Include ton_client support])])
 
 if test "$PHP_TON_CLIENT" != "no"; then
   dnl Write more examples of tests here...
@@ -88,7 +78,7 @@ if test "$PHP_TON_CLIENT" != "no"; then
   dnl PHP_SUBST(TON_CLIENT_SHARED_LIBADD)
 
   dnl In case of no dependencies
-  AC_DEFINE(HAVE_TON_CLIENT, 1, [ Have ton_client support ])
+  AC_DEFINE(HAVE_TON_CLIENT, 1, [ Have TON Client support ])
 
   PHP_NEW_EXTENSION(ton_client, ton_client.c, $ext_shared)
 fi

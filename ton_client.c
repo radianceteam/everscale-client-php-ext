@@ -7,6 +7,7 @@
 #include "php.h"
 #include "ext/standard/info.h"
 #include "php_ton_client.h"
+#include "tonclient.h"
 
 /* For compatibility with older PHP versions */
 #ifndef ZEND_PARSE_PARAMETERS_NONE
@@ -15,32 +16,74 @@
 	ZEND_PARSE_PARAMETERS_END()
 #endif
 
-/* {{{ void ton_client_test1()
+/* {{{ string ton_create_context()
  */
-PHP_FUNCTION(ton_client_test1)
+PHP_FUNCTION(ton_create_context)
 {
 	ZEND_PARSE_PARAMETERS_NONE();
 
-	php_printf("The extension %s is loaded and working!\r\n", "ton_client");
+    // TODO: replace with TON library call
+    zend_string *result = zend_string_init("{\"result\":1}", strlen("{\"result\":1}"), 0);
+
+    php_printf("Calling %s\n", "ton_create_context");
+    php_printf("Result of %s: %s\n", "ton_create_context", ZSTR_VAL(result));
+
+    RETURN_STR(result);
 }
 /* }}} */
 
-/* {{{ string ton_client_test2( [ string $var ] )
+/* {{{ void ton_destroy_context([ int $context ])
  */
-PHP_FUNCTION(ton_client_test2)
+PHP_FUNCTION(ton_destroy_context)
 {
-	char *var = "World";
-	size_t var_len = sizeof("World") - 1;
-	zend_string *retval;
+    zend_long context = -1;
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_LONG(context)
+    ZEND_PARSE_PARAMETERS_END();
 
-	ZEND_PARSE_PARAMETERS_START(0, 1)
-		Z_PARAM_OPTIONAL
-		Z_PARAM_STRING(var, var_len)
+    php_printf("Calling %s(%zd)\n", "ton_destroy_context", context);
+    // TODO: make TON library call
+}
+/* }}} */
+
+/* {{{ void ton_request( [ string $json, mixed callback ] )
+ */
+PHP_FUNCTION(ton_request)
+{
+    zend_string *json;
+    zval *callback;
+    zend_fcall_info_cache fcc;
+
+	ZEND_PARSE_PARAMETERS_START(2, 2)
+        Z_PARAM_STR(json)
+        Z_PARAM_ZVAL(callback)
 	ZEND_PARSE_PARAMETERS_END();
 
-	retval = strpprintf(0, "Hello %s", var);
+    if (!zend_is_callable_ex(callback, NULL, 0, NULL, &fcc, NULL)) {
+        zend_string	*callback_name = zend_get_callable_name(callback);
+        php_error_docref(NULL, E_WARNING, "Requires argument 2, '%s', to be a valid callback", ZSTR_VAL(callback_name));
+        zend_string_release_ex(callback_name, 0);
+        return;
+    }
 
-	RETURN_STR(retval);
+    php_printf("Calling %s with JSON argument %s\n", "ton_request", ZSTR_VAL(json));
+
+    zval callback_args[3]; // json, response_type, finished
+    ZVAL_STRINGL(&callback_args[0], "{\"test\":true}", strlen("{\"test\":true}"));
+    ZVAL_LONG(&callback_args[1], (zend_long)1);
+    ZVAL_BOOL(&callback_args[2], (zend_bool)1);
+
+    zend_fcall_info fci;
+    fci.size = sizeof(fci);
+    fci.object = NULL;
+    fci.param_count = 3; // json, response_type, finished
+    fci.params = callback_args;
+    fci.no_separation = 0;
+    ZVAL_COPY_VALUE(&fci.function_name, callback);
+    if (zend_call_function(&fci, &fcc) == FAILURE) {
+        php_error_docref(NULL, E_WARNING, "Cannot call the callback");
+    }
+    zval_ptr_dtor(&callback_args[0]);
 }
 /* }}}*/
 
@@ -68,19 +111,25 @@ PHP_MINFO_FUNCTION(ton_client)
 
 /* {{{ arginfo
  */
-ZEND_BEGIN_ARG_INFO(arginfo_ton_client_test1, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_ton_create_context, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO(arginfo_ton_client_test2, 0)
-	ZEND_ARG_INFO(0, str)
+ZEND_BEGIN_ARG_INFO(arginfo_ton_destroy_context, 0)
+	ZEND_ARG_INFO(0, context)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_ton_request, 0)
+    ZEND_ARG_INFO(0, json)
+    ZEND_ARG_INFO(0, callback)
 ZEND_END_ARG_INFO()
 /* }}} */
 
 /* {{{ ton_client_functions[]
  */
 static const zend_function_entry ton_client_functions[] = {
-	PHP_FE(ton_client_test1,		arginfo_ton_client_test1)
-	PHP_FE(ton_client_test2,		arginfo_ton_client_test2)
+	PHP_FE(ton_create_context,		arginfo_ton_create_context)
+	PHP_FE(ton_destroy_context,		arginfo_ton_destroy_context)
+    PHP_FE(ton_request,		        arginfo_ton_request)
 	PHP_FE_END
 };
 /* }}} */
@@ -96,7 +145,7 @@ zend_module_entry ton_client_module_entry = {
 	PHP_RINIT(ton_client),			/* PHP_RINIT - Request initialization */
 	NULL,							/* PHP_RSHUTDOWN - Request shutdown */
 	PHP_MINFO(ton_client),			/* PHP_MINFO - Module info */
-	PHP_TON_CLIENT_VERSION,		/* Version */
+	PHP_TON_CLIENT_VERSION,		    /* Version */
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */

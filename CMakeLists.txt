@@ -1,8 +1,23 @@
-﻿cmake_minimum_required(VERSION 3.5)
+﻿# Note: This file is needed for IDE support only.
+# We still have to build PHP extension using PHP SDK tools,
+# especially on Windows.
 
-project(ton_client
-          VERSION 1.0.0
-          LANGUAGES C)
+cmake_minimum_required(VERSION 3.5)
+
+set(TC_VERSION_MAJOR 1)
+set(TC_VERSION_MINOR 1)
+set(TC_VERSION_PATCH 0)
+set(TC_VERSION_SUFFIX "-rc")
+set(TC_VERSION_STRING ${TC_VERSION_MAJOR}.${TC_VERSION_MINOR}.${TC_VERSION_PATCH})
+set(TC_VERSION_FULL ${TC_VERSION_STRING}${TC_VERSION_SUFFIX})
+
+project(ton_client VERSION ${TC_VERSION_STRING} LANGUAGES C)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+
+set(TON_SDK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/vendor/build/ton-sdk-${TC_VERSION_FULL}/src/ton-sdk")
+set(TON_SDK_CLIENT_DIR "${TON_SDK_SRC}/ton_client/client")
+set(TON_SDK_RELEASE_DIR "${TON_SDK_SRC}/target/${TON_SDK_TARGET}/release")
 
 message(STATUS "Begin cmaking of PHP extension ...")
 
@@ -34,16 +49,20 @@ FILE(GLOB KernelHeaders ./kernel/*.h)
 FILE(GLOB KernelSources ./kernel/*.c)
 
 set(SOURCE_FILES
-    ton_client.c
-    php_ton_client.h
-    ${KernelHeaders}
-    ${KernelSources})
+        ton_client.c
+        php_ton_client.h
+        ${KernelHeaders}
+        ${KernelSources})
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
-	add_definitions(-DHAVE_CONFIG_H)
-	set(SOURCE_FILES "${SOURCE_FILES};config.h")
-endif()
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+    add_definitions(-DHAVE_CONFIG_H)
+    set(SOURCE_FILES "${SOURCE_FILES};config.h")
+endif ()
+
+find_package(TON REQUIRED)
 
 add_library(ton_client SHARED ${SOURCE_FILES})
+
+target_link_libraries(ton_client TON::Client)
 
 message(STATUS "End cmaking of PHP extension")

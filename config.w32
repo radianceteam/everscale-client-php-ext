@@ -1,4 +1,4 @@
-ARG_ENABLE('ton_client', 'ton_client support', 'no');
+ARG_WITH('ton_client', 'ton_client support', 'no');
 
 if (PHP_TON_CLIENT != 'no') {
 	AC_DEFINE('HAVE_TON_CLIENT', 1, 'ton_client support enabled');
