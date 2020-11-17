@@ -32,8 +32,9 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb -O0 -Wall -std=gnu99 -fvis
 
 set(PHP_VERSION 7.4.1)
 set(PHP_SRC_PATH "../..")
+set(PHP_DEPS_PATH "../../../deps")
 
-list(APPEND CMAKE_PREFIX_PATH "${PHP_SRC_PATH}")
+list(APPEND CMAKE_PREFIX_PATH "${PHP_SRC_PATH} ${PHP_DEPS_PATH}")
 
 include_directories(
         "${PHP_SRC_PATH}"
@@ -41,14 +42,15 @@ include_directories(
         "${PHP_SRC_PATH}/Zend"
         "${PHP_SRC_PATH}/TSRM"
         "${PHP_SRC_PATH}/ext"
-        "${PHP_SRC_PATH}/sapi")
+        "${PHP_SRC_PATH}/sapi"
+        "${PHP_DEPS_PATH}/include")
 
 FILE(GLOB KernelHeaders ./kernel/*.h)
 FILE(GLOB KernelSources ./kernel/*.c)
 
 set(SOURCE_FILES
         ton_client.c
-        php_ton_client.h
+        rpa_queue.c
         ${KernelHeaders}
         ${KernelSources})
 
@@ -63,7 +65,7 @@ add_library(ton_client SHARED ${SOURCE_FILES})
 
 set_target_properties(ton_client PROPERTIES
         C_VISIBILITY_PRESET hidden
-        COMPILE_DEFINITIONS "PHP_WIN32"
+        COMPILE_DEFINITIONS "PHP_WIN32;ZTS"
         VERSION ${TC_VERSION_STRING}
         SOVERSION ${TC_VERSION_MAJOR})
 
