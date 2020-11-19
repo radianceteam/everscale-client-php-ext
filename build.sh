@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -e
+set -e
 
 SRC_DIR=$(pwd)
 BUILD_DIR=${SRC_DIR}/build
@@ -18,4 +18,5 @@ cd ${BUILD_DIR}
 phpize
 ./configure --with-ton_client=${SDK_INSTALL_DIR}
 make
-sudo make install
+
+#sudo make install

@@ -16,6 +16,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   cp "$SRC_DIR/deps/lib/x64/libton_client.so" "${INSTALL_DIR}/lib"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
   cp "$SRC_DIR/deps/lib/x64/libton_client.dylib" "${INSTALL_DIR}/lib"
+  install_name_tool -id @loader_path/libton_client.dylib ${INSTALL_DIR}/lib/libton_client.dylib
 fi
 
 cp "$SRC_DIR/deps/include/tonclient.h" "${INSTALL_DIR}/include"

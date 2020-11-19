@@ -23,6 +23,18 @@
 #include "os.h"
 #include "debug.h"
 
+#ifdef TON_APPLE
+#include <sys/time.h>
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+#else
+
+#include <time.h>
+
+#endif
+
 // uncomment to print debug messages
 //#define QUEUE_DEBUG
 

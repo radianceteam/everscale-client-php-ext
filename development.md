@@ -56,15 +56,24 @@ Installation path can be ommitted, the script will use $HOME/ton-sdk by default.
 ```
 ./build.sh /path/to/sdk/installation/directory
 ```
-which will produce lots of text but the last line will be (note 20190902 may differ):
+which will produce lots of text but the last line will be (note the build path may differ):
 ```
-Installing shared extensions:     /usr/lib/php/20190902/
+Libraries have been installed in:
+   /Users/andy/Projects/ton/ton-client-php-ext/build/modules
+```
+
+ - Copy the exension file `ton_client.so` from the given path to the PHP etension dir.
+   It depends on your PHP installation, if it's PHP installed on Mac via Homebrew for example,
+   then extension path may be /usr/local/opt/php/lib/php/:
+
+```
+sudo cp /Users/andy/Projects/ton/ton-client-php-ext/build/modules/ton_client.so /usr/local/opt/php/lib/php/20190902/
 ```
 
  - Add extension to `php.ini`:
 
 ```
-extension="/usr/lib/php/20190902/ton_client.so"
+sudo echo 'extension="/usr/local/opt/php/lib/php/20190902/ton_client.so"' > /usr/local/etc/php/7.4/conf.d/ton_client.ini
 ```
 
 To check if the extension is loaded, call `php --info`:
