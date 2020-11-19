@@ -55,7 +55,7 @@ ton_client support => enabled
 ## Linux/Mac
 
 There's no pre-built binaries for these platform. You will need to install 
-extension by building PHP sources, as described in [Development notes](development.md#linuxmac).
+extension by building it from sources, as described in [Development notes](development.md#linuxmac).
 
 ## Troubleshooting
 
