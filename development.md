@@ -69,13 +69,19 @@ Libraries have been installed in:
    then extension path may be /usr/local/opt/php/lib/php/:
 
 ```
-sudo cp /Users/andy/Projects/ton/ton-client-php-ext/build/modules/ton_client.so /usr/local/opt/php/lib/php/20190902/
+PHP_EXT_DIR=$(php-config --extension-dir)
+echo $PHP_EXT_DIR
+/usr/lib/php/20190902
+sudo cp /Users/andy/Projects/ton/ton-client-php-ext/build/modules/ton_client.so $PHP_EXT_DIR
 ```
 
  - Add extension to `php.ini`:
 
 ```
-sudo echo 'extension="/usr/local/opt/php/lib/php/20190902/ton_client.so"' > /usr/local/etc/php/7.4/conf.d/ton_client.ini
+PHP_INI_DIR=$(php-config --ini-dir)
+echo $PHP_INI_DIR
+/etc/php/7.4/cli/conf.d
+echo 'extension="ton_client.so"' | sudo tee ${PHP_INI_DIR}/ton_client.ini
 ```
 
 To check if the extension is loaded, call `php --info`:
