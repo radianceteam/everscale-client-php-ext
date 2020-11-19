@@ -34,25 +34,36 @@ build.bat 7.4.1 x64 ZTS
 
 ### Linux/Mac
 
+#### Required tools
+
 `phpize` is a required command for building extension from sources.
 For example, on Ubuntu it can be installed by executing `sudo apt-get install php7.4-dev` command.  
- 
+
+#### TON SDK installation
+
+For installing TON client extension on Linux, first install TON client binaries:
+
 ```
-cd /path/to/ext/sources
-./build.sh
+./install-sdk.sh [/path/to/sdk/installation/directory]
+```
+
+Installation path can be ommitted, the script will use $HOME/ton-sdk by default.
+
+#### Building PHP extension
+
+ - Run build script:
+
+```
+./build.sh /path/to/sdk/installation/directory
 ```
 which will produce lots of text but the last line will be (note 20190902 may differ):
 ```
 Installing shared extensions:     /usr/lib/php/20190902/
 ```
 
-Copy `libton_client.so` from `deps/lib/x64` directory to the system-wide
-library path (or add it to `LD_LIBRARY_PATH`) and add `ton_client` 
-extension to `php.ini`:
+ - Add extension to `php.ini`:
 
 ```
-sudo cp deps/lib/x64/libton_client.so /usr/lib
-sudo vi /etc/php/7.4/cli/php.ini
 extension="/usr/lib/php/20190902/ton_client.so"
 ```
 

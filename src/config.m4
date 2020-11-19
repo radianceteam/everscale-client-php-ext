@@ -4,18 +4,36 @@ PHP_ARG_WITH([ton_client],
      [Include ton_client support])])
 
 if test "$PHP_TON_CLIENT" != "no"; then
-  LIBNAME=ton_client
-  LIBSYMBOL=tc_create_context
-  LIB_PATH=../deps/lib/x64
-  PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
+
+  if test -r $PHP_TON_CLIENT/include/tonclient.h; then
+    TON_CLIENT_DIR=$PHP_TON_CLIENT
+  else
+    AC_MSG_CHECKING(for ton_client in default path)
+    for i in /usr/local /usr $(pwd); do
+      if test -r $i/include/tonclient.h; then
+        TON_CLIENT_DIR=$i
+        AC_MSG_RESULT(found in $i)
+        break
+      fi
+    done
+  fi
+
+  if test -z "$TON_CLIENT_DIR"; then
+    AC_MSG_RESULT(not found)
+    AC_MSG_ERROR(Please point to the correct ton_client distribution)
+  fi
+
+  PHP_CHECK_LIBRARY(ton_client,tc_create_context,
   [
-    PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $LIB_PATH, TON_CLIENT_DIR_SHARED_LIBADD)
-    AC_DEFINE(HAVE_TON_CLIENTLIB, 1 ,[ ])
+    PHP_ADD_INCLUDE($TON_CLIENT_DIR/include)
+    PHP_ADD_LIBRARY_WITH_PATH(ton_client, $TON_CLIENT_DIR/$PHP_LIBDIR, EXTRA_CFLAGS)
+    PHP_SUBST(EXTRA_CFLAGS)
+    AC_DEFINE(HAVE_TON_CLIENT, 1, [ Have TON Client support ])
   ],[
-    AC_MSG_ERROR([wrong $LIBNAME lib version or lib not found])
+    AC_MSG_ERROR([ton lib not found])
   ],[
-    -L$LIB_PATH -ldl
+    -L$TON_CLIENT_DIR/$PHP_LIBDIR
   ])
-  AC_DEFINE(HAVE_TON_CLIENT, 1, [ Have TON Client support ])
+
   PHP_NEW_EXTENSION(ton_client, ton_client.c rpa_queue.c, $ext_shared)
 fi

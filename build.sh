@@ -1,12 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 
-mkdir -p build/deps/lib
-cp -r src/* build
-cp deps/include/tonclient.h build
-cp -r deps/lib/x64 build/deps/lib/
+#set -e
 
-cd build
+SRC_DIR=$(pwd)
+BUILD_DIR=${SRC_DIR}/build
+SDK_INSTALL_DIR=$HOME/ton-sdk
+
+if [ "$#" -ne 0 ]; then
+  SDK_INSTALL_DIR=$1
+fi
+
+rm -rf ${BUILD_DIR}
+mkdir -p ${BUILD_DIR}
+cp -r ${SRC_DIR}/src/* ${BUILD_DIR}
+
+cd ${BUILD_DIR}
 phpize
-./configure
+./configure --with-ton_client=${SDK_INSTALL_DIR}
 make
 sudo make install
