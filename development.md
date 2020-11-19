@@ -44,25 +44,27 @@ For example, on Ubuntu it can be installed by executing `sudo apt-get install ph
 For installing TON client extension on Linux, first install TON client binaries:
 
 ```
+git clone https://github.com/radianceteam/ton-client-php-ext.git
+cd ton-client-php-ext
 ./install-sdk.sh [/path/to/sdk/installation/directory]
 ```
 
-Installation path can be ommitted, the script will use $HOME/ton-sdk by default.
+Installation path can be omitted, the script will use $HOME/ton-sdk by default.
 
 #### Building PHP extension
 
  - Run build script:
 
 ```
-./build.sh /path/to/sdk/installation/directory
+./build.sh [/path/to/sdk/installation/directory]
 ```
-which will produce lots of text but the last line will be (note the build path may differ):
+which will produce lots of text but amongst the last lines will be (note the build path may differ):
 ```
 Libraries have been installed in:
    /Users/andy/Projects/ton/ton-client-php-ext/build/modules
 ```
 
- - Copy the exension file `ton_client.so` from the given path to the PHP etension dir.
+ - Copy the extension file `ton_client.so` from the given path to the PHP extension dir.
    It depends on your PHP installation, if it's PHP installed on Mac via Homebrew for example,
    then extension path may be /usr/local/opt/php/lib/php/:
 
