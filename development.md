@@ -117,6 +117,12 @@ build.bat 7.4.1 x86
 ```
 3. Find new binaries in `build\release` directory, pack them and attach to the new release.
 
+## Versioning
+
+Package versioning mirrors TON SDK releases. So for example package `1.1.1` works 
+with TON SDK binaries of the same version, and contains all the functions from the 
+corresponding `api.json`. 
+
 ## Troubleshooting
 
 Fire any question to our [Telegram channel](https://t.me/RADIANCE_TON_SDK). 
