@@ -17,8 +17,6 @@
 #include "rpa_queue.h"
 #include "debug.h"
 
-#define NAMEOF(val) "#VAR"
-
 // MAX number of unprocessed callback handler calls per single TON request.
 // In other words, its the MAX number of times the callback can be received
 // before previous callbacks have been processes via calling function ton_request_next.
@@ -135,7 +133,7 @@ void ton_resource_destructor(zend_resource *rsrc) /* {{{ */
  */
 PHP_MINIT_FUNCTION(ton_client)
 {
-    res_num = zend_register_list_destructors_ex(ton_resource_destructor, NULL, NAMEOF(ton_request_data_t), module_number);
+    res_num = zend_register_list_destructors_ex(ton_resource_destructor, NULL, "ton_request_data_t", module_number);
     return SUCCESS;
 }
 /* }}} */
@@ -194,7 +192,7 @@ PHP_FUNCTION(ton_request_sync)
         Z_PARAM_STR(params_json)
     ZEND_PARSE_PARAMETERS_END();
 
-    TON_DBG_MSG("ton_request_sync is called with arguments %lld, %s, %s\n",
+    TON_DBG_MSG("ton_request_sync is called with arguments %ld, %s, %s\n",
                 context,
                 ZSTR_VAL(function_name),
                 ZSTR_VAL(params_json));
@@ -224,7 +222,7 @@ PHP_FUNCTION(ton_request_start)
     Z_PARAM_STR(params_json)
     ZEND_PARSE_PARAMETERS_END();
 
-    TON_DBG_MSG("ton_request_start is called with arguments %lld, %s, %s\n",
+    TON_DBG_MSG("ton_request_start is called with arguments %ld, %s, %s\n",
                 context,
                 ZSTR_VAL(function_name),
                 ZSTR_VAL(params_json));
@@ -254,12 +252,12 @@ PHP_FUNCTION(ton_request_next)
     ZEND_PARSE_PARAMETERS_END();
 
     ton_request_data_t * data;
-    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), NAMEOF(ton_request_data_t), res_num)) == NULL) {
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL) {
         RETURN_NULL();
     }
 
     TON_DBG_MSG("ton_request_next is called for request %p\n", data);
-    TON_DBG_MSG("Calling rpa_queue_pop for request %p; timeout = %lld\n", data, timeout);
+    TON_DBG_MSG("Calling rpa_queue_pop for request %p; timeout = %ld\n", data, timeout);
     ton_callback_queue_element_t *e;
     bool result = (ZEND_NUM_ARGS() == 1)
             ? rpa_queue_pop(data->queue, (void**)&e)
@@ -301,7 +299,7 @@ PHP_FUNCTION(is_ton_request_finished)
     ZEND_PARSE_PARAMETERS_END();
 
     ton_request_data_t* data;
-    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), NAMEOF(ton_request_data_t), res_num)) == NULL) {
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL) {
         RETURN_NULL();
     }
 
@@ -323,7 +321,7 @@ PHP_FUNCTION(ton_request_last_status)
     ZEND_PARSE_PARAMETERS_END();
 
     ton_request_data_t* data;
-    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), NAMEOF(ton_request_data_t), res_num)) == NULL) {
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL) {
         RETURN_NULL();
     }
 
