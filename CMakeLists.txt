@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.9)
 
+set(PHP_SRC_ROOT_DIR build/phpmaster/vc15/x64/php-src)
+
+include_directories(${PHP_SRC_ROOT_DIR})
+include_directories(${PHP_SRC_ROOT_DIR}/main)
+include_directories(${PHP_SRC_ROOT_DIR}/Zend)
+
 set(CMAKE_MODULE_PATH
         ${CMAKE_MODULE_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
