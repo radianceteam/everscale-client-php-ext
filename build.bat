@@ -17,12 +17,8 @@ if not exist %BUILD_DIR% git clone https://github.com/microsoft/php-sdk-binary-t
 if not "%errorlevel%" == "0" exit /b %errorlevel%
 
 cd %BUILD_DIR%
-phpsdk-vc15-%PLATFORM%.bat -t %ROOT_DIR%\platform.bat --task-args "%PHP_VERSION% %ZTS%"
+phpsdk-vc15-%PLATFORM%.bat -t %ROOT_DIR%\platform.bat --task-args "%PHP_VERSION% %ZTS%" && echo Done building %PROJECT_NAME% && cd %ROOT_DIR%
 if not "%errorlevel%" == "0" exit /b %errorlevel%
-
-cd %ROOT_DIR%
-echo Done building %PROJECT_NAME%
-goto :eof
 
 :usage
 echo usage: build.bat ^<PHP_VERSION^> ^<PLATFORM^> [^<ZTS^>]

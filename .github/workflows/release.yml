@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    branches-ignore:
+      - '*'
+    tags:
+      - '*.*.*' # push to versioned tag will trigger this build
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_version: ${{ steps.vars.outputs.version }}
+    steps:
+      - name: Set version
+        id: vars
+        uses: battila7/get-version-action@v2
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.vars.outputs.version }}
+          release_name: ${{ steps.vars.outputs.version }}
+
+  build:
+    name: ${{ matrix.config.name }}
+    needs: create_release
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "Windows x64 (NTS)",
+            os: windows-2016,
+            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 7.4.1 x64'",
+            release_path: "build/release/x64/nts",
+            archive_suffix: "nts-Win32-vc15-x64"
+          }
+          - {
+            name: "Windows x64 (ZTS)",
+            os: windows-2016,
+            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 7.4.1 x64 ZTS'",
+            release_path: "build/release/x64/zts",
+            archive_suffix: "Win32-vc15-x64"
+          }
+          - {
+            name: "Windows x86 (NTS)",
+            os: windows-2016,
+            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 7.4.1 x86'",
+            release_path: "build/release/x86/nts",
+            archive_suffix: "nts-Win32-vc15-x86"
+          }
+          - {
+            name: "Windows x86 (ZTS)",
+            os: windows-2016,
+            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 7.4.1 x86 ZTS'",
+            release_path: "build/release/x86/zts",
+            archive_suffix: "Win32-vc15-x86"
+          }
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build
+        run: |
+          ${{ matrix.config.build_command }} ${{ needs.create_release.outputs.release_version }}
+      - name: Compress
+        uses: papeloto/action-zip@v1
+        with:
+          files: ${{ matrix.config.release_path }}/
+          recursive: false
+          dest: build/release/assets.zip
+      - name: Upload Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: build/release/assets.zip
+          asset_name: ton-client-${{ needs.create_release.outputs.release_version }}-${{ matrix.config.archive_suffix }}.zip
+          asset_content_type: application/zip

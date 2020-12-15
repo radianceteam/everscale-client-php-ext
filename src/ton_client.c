@@ -24,6 +24,24 @@
 
 #define CALLBACK_QUEUE_CAPACITY 1024
 
+zend_long TON_REQUEST_NEXT_ID = 1;
+
+typedef struct ton_request_data {
+    zend_long id;
+    rpa_queue_t * queue;
+    bool finished;
+    int last_status;
+    struct ton_request_data *joined_to;
+} ton_request_data_t;
+
+ton_request_data_t *ton_request_data_create() {
+    ton_request_data_t *data = calloc(1, sizeof(ton_request_data_t));
+    data->id = TON_REQUEST_NEXT_ID++;
+    data->last_status = -1;
+    rpa_queue_create(&data->queue, CALLBACK_QUEUE_CAPACITY);
+    return data;
+}
+
 // Queue element structure.
 // Blocking queue is used to operate with the core ton client callbacks.
 // PHP client calls ton_request_next func which blocks until the next callback
@@ -34,37 +52,27 @@ typedef struct ton_callback_queue_element {
     uint32_t len;
     uint32_t status;
     bool finished;
+    ton_request_data_t *data;
 } ton_callback_queue_element_t;
 
 ton_callback_queue_element_t *ton_callback_queue_element_create(
         tc_string_data_t params_json,
         int response_type,
-        bool finished) {
+        bool finished,
+        ton_request_data_t *data) {
     ton_callback_queue_element_t *e = malloc(sizeof(ton_callback_queue_element_t));
     e->json = malloc(params_json.len);
     e->len = params_json.len;
     memcpy(e->json, params_json.content, params_json.len);
     e->status = response_type;
     e->finished = finished;
+    e->data = data;
     return e;
 }
 
 void ton_callback_queue_element_free(ton_callback_queue_element_t *e) {
     free(e->json);
     free(e);
-}
-
-typedef struct ton_request_data {
-    rpa_queue_t * queue;
-    bool finished;
-    int last_status;
-} ton_request_data_t;
-
-ton_request_data_t *ton_request_data_create() {
-    ton_request_data_t *data = calloc(1, sizeof(ton_request_data_t));
-    data->last_status = -1;
-    rpa_queue_create(&data->queue, CALLBACK_QUEUE_CAPACITY);
-    return data;
 }
 
 void ton_request_data_shutdown_queue(ton_request_data_t *data) {
@@ -98,7 +106,11 @@ void response_queueing_handler(
 
     ton_request_data_t *data = request_ptr;
     ton_callback_queue_element_t *e = ton_callback_queue_element_create(
-            params_json, response_type, finished);
+            params_json, response_type, finished, data);
+
+    if (data->joined_to) {
+        data = data->joined_to;
+    }
 
     data->last_status = response_type;
     data->finished = finished;
@@ -145,7 +157,7 @@ PHP_FUNCTION(ton_create_context)
     zend_string *config_json;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_STR(config_json)
+    Z_PARAM_STR(config_json)
     ZEND_PARSE_PARAMETERS_END();
 
     TON_DBG_MSG("ton_create_context is called with config %s\n", ZSTR_VAL(config_json));
@@ -169,7 +181,7 @@ PHP_FUNCTION(ton_destroy_context)
     zend_long context = -1;
 
     ZEND_PARSE_PARAMETERS_START(1, 1)
-        Z_PARAM_LONG(context)
+    Z_PARAM_LONG(context)
     ZEND_PARSE_PARAMETERS_END();
 
     TON_DBG_MSG("calling tc_destroy_context with argument %d\n", (int)context);
@@ -187,9 +199,9 @@ PHP_FUNCTION(ton_request_sync)
     zend_string *params_json;
 
     ZEND_PARSE_PARAMETERS_START(3, 3)
-        Z_PARAM_LONG(context)
-        Z_PARAM_STR(function_name)
-        Z_PARAM_STR(params_json)
+    Z_PARAM_LONG(context)
+    Z_PARAM_STR(function_name)
+    Z_PARAM_STR(params_json)
     ZEND_PARSE_PARAMETERS_END();
 
     TON_DBG_MSG("ton_request_sync is called with arguments %ld, %s, %s\n",
@@ -234,7 +246,29 @@ PHP_FUNCTION(ton_request_start)
 
     TON_DBG_MSG("ton_request_start returned with resource %p\n", payload);
 
-    RETURN_RES(zend_register_resource(payload, res_num));
+    zend_resource *resource = zend_register_resource(payload, res_num);
+    RETURN_RES(resource);
+}
+/* }}}*/
+
+/* {{{ int ton_request_id( resource $request )
+ */
+PHP_FUNCTION(ton_request_id)
+{
+    zval *res;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_RESOURCE(res)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ton_request_data_t * data;
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL) {
+        RETURN_NULL();
+    }
+
+    TON_DBG_MSG("ton_request_id is called for request %p\n", data);
+    TON_DBG_MSG("ton_request_id (%p): return %ld\n", data, data->id);
+    RETURN_LONG(data->id);
 }
 /* }}}*/
 
@@ -273,18 +307,85 @@ PHP_FUNCTION(ton_request_next)
     zend_string_release(str);
 #endif
 
-    // returning tuple [json, status, finished]
-    zval json, status, finished;
+    // returning tuple [json, status, finished, resource]
+    zval json, status, finished, id;
     ZVAL_STRINGL(&json, e->json, e->len);
     ZVAL_LONG(&status, e->status);
     ZVAL_BOOL(&finished, e->finished);
-    HashTable *tuple = zend_new_array(3);
+    ZVAL_LONG(&id, e->data->id);
+    HashTable *tuple = zend_new_array(4);
     zend_hash_next_index_insert(tuple, &json);
     zend_hash_next_index_insert(tuple, &status);
     zend_hash_next_index_insert(tuple, &finished);
+    zend_hash_next_index_insert(tuple, &id);
 
     ton_callback_queue_element_free(e);
+    TON_DBG_MSG("ton_request_next (%p) finished\n", data);
     RETURN_ARR(tuple);
+}
+/* }}}*/
+
+/* {{{ bool ton_request_join( resource $request, resource $request2 )
+ */
+PHP_FUNCTION(ton_request_join)
+{
+    zval *res;
+    zval *res2;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(res)
+    Z_PARAM_RESOURCE(res2)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ton_request_data_t * data, *data2;
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL ||
+        (data2 = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res2), "ton_request_data_t", res_num)) == NULL) {
+        if (data == NULL) TON_DBG_MSG("Invalid resource for $request\n");
+        if (data2 == NULL) TON_DBG_MSG("Invalid resource for $request2\n");
+        RETURN_FALSE
+    }
+
+    TON_DBG_MSG("ton_request_join is called for requests %p, %p\n", data, data2);
+    if (!data2->joined_to) {
+        data2->joined_to = data;
+        TON_DBG_MSG("request %p started to receive all events of request %p\n", data, data2);
+        RETURN_TRUE
+    } else {
+        TON_DBG_MSG("Request %p already used for join", data2);
+        RETURN_FALSE
+    }
+}
+/* }}}*/
+
+/* {{{ bool ton_request_disconnect( resource $request, resource $request2 )
+ */
+PHP_FUNCTION(ton_request_disconnect)
+{
+    zval *res;
+    zval *res2;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(res)
+    Z_PARAM_RESOURCE(res2)
+    ZEND_PARSE_PARAMETERS_END();
+
+    ton_request_data_t * data, *data2;
+    if ((data = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res), "ton_request_data_t", res_num)) == NULL ||
+        (data2 = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res2), "ton_request_data_t", res_num)) == NULL) {
+        if (data == NULL) TON_DBG_MSG("Invalid resource for $request\n");
+        if (data2 == NULL) TON_DBG_MSG("Invalid resource for $request2\n");
+        RETURN_FALSE
+    }
+
+    TON_DBG_MSG("ton_request_disconnect is called for requests %p, %p\n", data, data2);
+    if (data2->joined_to == data){
+        data2->joined_to = NULL;
+        TON_DBG_MSG("request %p disconnected from %p\n", data, data2);
+        RETURN_TRUE
+    } else {
+        TON_DBG_MSG("WARNING: request %p was not joined to %p\n", data, data2);
+        RETURN_FALSE
+    }
 }
 /* }}}*/
 
@@ -304,9 +405,13 @@ PHP_FUNCTION(is_ton_request_finished)
     }
 
     TON_DBG_MSG("is_ton_request_finished is called for request %p\n", data);
-    TON_DBG_MSG("is_ton_request_finished returning %d for request %p\n", data->finished, data);
 
-    RETURN_BOOL(data->finished);
+    uint32_t size = rpa_queue_size(data->queue);
+    bool result = data->finished && size == 0;
+    TON_DBG_MSG("is_ton_request_finished returning %d for request %p (finished: %d, queue size: %d)\n",
+                result, data, data->finished, size);
+
+    RETURN_BOOL(result);
 }
 /* }}}*/
 
@@ -375,8 +480,22 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_request_start, 0, 0, 3)
     ZEND_ARG_INFO(0, params_json)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_request_id, 0, 0, 1)
+    ZEND_ARG_INFO(0, request_id)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_request_next, 0, 0, 1)
     ZEND_ARG_INFO(0, request_id)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_request_join, 0, 0, 2)
+    ZEND_ARG_INFO(0, request_id)
+    ZEND_ARG_INFO(0, join_request_id)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_request_disconnect, 0, 0, 2)
+    ZEND_ARG_INFO(0, request_id)
+    ZEND_ARG_INFO(0, join_request_id)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_is_ton_request_finished, 0, 0, 1)
@@ -395,7 +514,10 @@ static const zend_function_entry ton_client_functions[] = {
     PHP_FE(ton_destroy_context,     arginfo_ton_destroy_context)
     PHP_FE(ton_request_sync,        arginfo_ton_request_sync)
     PHP_FE(ton_request_start,       arginfo_ton_request_start)
+    PHP_FE(ton_request_id,          arginfo_ton_request_id)
     PHP_FE(ton_request_next,        arginfo_ton_request_next)
+    PHP_FE(ton_request_join,        arginfo_ton_request_join)
+    PHP_FE(ton_request_disconnect,  arginfo_ton_request_disconnect)
     PHP_FE(is_ton_request_finished, arginfo_is_ton_request_finished)
     PHP_FE(ton_request_last_status, arginfo_ton_request_last_status)
     PHP_FE_END

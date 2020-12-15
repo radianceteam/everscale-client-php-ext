@@ -22,6 +22,8 @@ See [Development notes](development.md).
 
 The following functions are added by this extension:
 
+---
+
 ```php
 string ton_create_context( string $config_json );
 ```
@@ -36,6 +38,8 @@ Return value:
 
  JSON containing context ID.
 
+---
+
 ```php
 void ton_destroy_context( int $context );
 ```
@@ -45,6 +49,8 @@ Destroys TON client context.
 Parameters:
 
  - `$context` - Context ID previously returned by `ton_create_context`.
+
+---
 
 ```php
 string ton_request_sync( int $context, string $function_name, string $params_json);
@@ -62,6 +68,8 @@ Return value:
 
  JSON response.
 
+---
+
 ```php
 resource ton_request_start( int $context, string $function_name, string $params_json );
 ```
@@ -78,6 +86,8 @@ Return value:
 
  Request handle.
 
+---
+
 ```php
 array ton_request_next( resource $request, [ int $timeout ] );
 ```
@@ -91,7 +101,7 @@ Parameters:
  
 Return value:
 
- Array containing 3 values:
+ Array containing these values:
   
 ```php
  [ string $json, int $status, bool $finished ]
@@ -102,7 +112,9 @@ Return value:
   
  `$status` corresponds to the `tc_response_types` enum defined in [tonclient.h](https://github.com/tonlabs/TON-SDK/blob/master/ton_client/client/tonclient.h);
  
- When request is finished `$finished` will be `true`. 
+ When request is finished `$finished` will be `true`.
+
+---
 
 ```php
 ?bool is_ton_request_finished( resource $request )

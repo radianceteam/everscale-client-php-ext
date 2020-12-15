@@ -107,15 +107,22 @@ ton_client support => enabled
    - Using side project [radianceteam/ton-client-dotnet-bridge](https://github.com/radianceteam/ton-client-dotnet-bridge/actions) 
    is the recommended way ATM.
    - You could also build TON-SDK binaries yourself.
-2. Re-build all binaries for Windows using `build.bat`:
+2. Update extension version in `php_ton_client.h`.
+3. Commit and push changes; create new tag:
 
 ```
-build.bat 7.4.1 x64 ZTS
-build.bat 7.4.1 x86 ZTS
-build.bat 7.4.1 x64
-build.bat 7.4.1 x86
+git tag <VERSION>
+git push origin <VERSION> 
 ```
-3. Find new binaries in `build\release` directory, pack them and attach to the new release.
+
+for example:
+
+```
+git tag 1.3.0
+git push origin 1.3.0 
+```
+
+3. Wait for the new Release build to finish. Find the extension files in the Release assets.
 
 ## Versioning
 
@@ -132,6 +139,3 @@ Fire any question to our [Telegram channel](https://t.me/RADIANCE_TON_SDK).
  - [TON SDK PHP client library](https://github.com/radianceteam/ton-client-php).
  - [Writing PHP Extensions](https://www.zend.com/resources/writing-php-extensions).
 
-## TODO
-
-1. CI/CD script for Windows binaries.
