@@ -89,6 +89,20 @@ Return value:
 ---
 
 ```php
+int ton_request_id( resource $resource );
+```
+
+Parameters:
+
+- `$request` - Request handle previously returned by `ton_request_start`.
+
+Return value:
+
+Request unique identifier.
+
+---
+
+```php
 array ton_request_next( resource $request, [ int $timeout ] );
 ```
 
@@ -104,7 +118,7 @@ Return value:
  Array containing these values:
   
 ```php
- [ string $json, int $status, bool $finished ]
+ [ string $json, int $status, bool $finished, int $id ]
 ```
 
  `$json` is always containing callback data unless it's a return value for a function which returns nothing 
@@ -113,6 +127,47 @@ Return value:
  `$status` corresponds to the `tc_response_types` enum defined in [tonclient.h](https://github.com/tonlabs/TON-SDK/blob/master/ton_client/client/tonclient.h);
  
  When request is finished `$finished` will be `true`.
+
+ `$id` is an identifier of request. Can be used together with `ton_request_join` 
+ to identify which of the joined requests are receiving this data.
+
+---
+
+```php
+bool ton_request_join( resource $request, resource $request2 )
+```
+
+Sets `$request` to receive all events of `$request2`. Used for example to process
+app requests by `$request2`, while fetching events for `$request` via `ton_request_next`.
+
+Call `ton_request_disconnect` to undo this.
+
+Parameters:
+
+- `$request` - Request handle previously returned by `ton_request_start`.
+- `$request2` - Another request handle previously returned by `ton_request_start`.
+
+Return value:
+
+`true` if join was successful, `false` otherwise.
+
+---
+
+```php
+bool ton_request_disconnect( resource $request, resource $request2 )
+```
+
+Sets `$request` to no more receive events of `$request2`. Used 
+as an opposite operation to `ton_request_join`.
+
+Parameters:
+
+- `$request` - Request handle previously returned by `ton_request_start`.
+- `$request2` - Another request handle previously returned by `ton_request_start`.
+
+Return value:
+
+`true` if disconnect was successful, `false` otherwise.
 
 ---
 
