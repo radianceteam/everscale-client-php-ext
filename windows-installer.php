@@ -5,6 +5,7 @@ const MIN_PHP_VERSION = '7.4';
 class InstallationOptions
 {
     public string $version;
+    public ?string $out_file;
     public string $ext_dir;
     public string $exe_dir;
     public string $tmp_dir;
@@ -26,10 +27,10 @@ class InstallationOptions
         }
         if (!$this->skip_ini) {
             if (!is_file($this->ini_file)) {
-                fire_error("PHP ini file doesn't exist: {$this->ini_file}");
+                fire_error("PHP ini file doesn't exist: {$this->ini_file}", $this);
             }
             if (!is_writable($this->ini_file)) {
-                fire_error("PHP ini file is not writable: {$this->ini_file}");
+                fire_error("PHP ini file is not writable: {$this->ini_file}", $this);
             }
         }
         return null;
@@ -40,6 +41,7 @@ class InstallationOptions
         return <<<EOT
 Version: {$this->version}
 Arch: {$this->arch}
+Output file: {$this->out_file}
 Extension directory: {$this->ext_dir}
 PHP binary directory: {$this->exe_dir}
 Temp directory: {$this->tmp_dir}
@@ -73,9 +75,21 @@ function check_installed_version(InstallationOptions $options): bool
     return true;
 }
 
-function fire_error($message)
+function append_to_file(string $file_name, string $message)
 {
-    fwrite(STDERR, $message);
+    $f = fopen($file_name, 'a');
+    fwrite($f, $message);
+    fclose($f);
+}
+
+function fire_error(string $message, ?InstallationOptions $options = null)
+{
+    if ($options && $options->out_file) {
+        append_to_file($options->out_file, "[ERROR] ${message}\n");
+    }
+    if (!$options->silent) {
+        fwrite(STDERR, $message);
+    }
     exit(1);
 }
 
@@ -85,6 +99,7 @@ function usage($script_name)
 Usage: php ${script_name} 
     -v|--version <VERSION>      Extension version to be installed.
     [-h|--help]                 Show this help.
+    [-o|--output]               Write output to file.
     [-S|--silent]               Don't print too much.
     [-D|--skip-download]        Skip downloading archive. Use existing archive from tmp dir.
     [-U|--skip-unpack]          Skip unpacking downloaded archive.
@@ -103,10 +118,11 @@ EOT;
 
 function get_options($argv): InstallationOptions
 {
-    if (!($options = getopt('hv:fDUCsa:t:e:x:i:hBSI', [
+    if (!($options = getopt('hSv:o:fDUCsa:t:e:x:i:hBI', [
         'help',
         'silent',
         'version:',
+        'output:',
         'skip-download',
         'skip-unpack',
         'skip-cleanup',
@@ -135,6 +151,7 @@ function get_options($argv): InstallationOptions
 
     $o = new InstallationOptions();
     $o->version = isset($options['v']) ? $options['v'] : $options['version'];
+    $o->out_file = isset($options['o']) ? $options['o'] : (isset($options['output']) ? $options['output'] : null);
     $o->skip_download = isset($options['D']) || isset($options['skip-download']);
     $o->skip_unpack = isset($options['U']) || isset($options['skip-unpack']);
     $o->skip_cleanup = isset($options['C']) || isset($options['skip-cleanup']);
@@ -143,16 +160,16 @@ function get_options($argv): InstallationOptions
     $o->force_install = isset($options['f']) || isset($options['force-install']);
     $o->silent = isset($options['S']) || isset($options['silent']);
     $o->ts = isset($options['s']) || isset($options['force-thread-safe']) || is_thread_safe($phpinfo);
-    $o->arch = isset($options['a']) ? $options['a'] : (isset($options['force-arch']) ? $options['force-arch'] : get_arch($phpinfo));
-    $o->tmp_dir = isset($options['t']) ? $options['t'] : (isset($options['force-tmp-dir']) ? $options['force-tmp-dir'] : get_tmp_dir());
+    $o->arch = isset($options['a']) ? $options['a'] : (isset($options['force-arch']) ? $options['force-arch'] : get_arch($phpinfo, $o));
+    $o->tmp_dir = isset($options['t']) ? $options['t'] : (isset($options['force-tmp-dir']) ? $options['force-tmp-dir'] : get_tmp_dir($o));
     $o->ext_dir = isset($options['e']) ? $options['e'] : (isset($options['force-ext-dir']) ? $options['force-ext-dir'] : get_php_ext_dir());
     $o->exe_dir = isset($options['x']) ? $options['x'] : (isset($options['force-exe-dir']) ? $options['force-exe-dir'] : get_php_exe_dir());
-    $o->ini_file = isset($options['i']) ? $options['i'] : (isset($options['force-ini-file']) ? $options['force-ini-file'] : get_ini_file_location($phpinfo));
+    $o->ini_file = isset($options['i']) ? $options['i'] : (isset($options['force-ini-file']) ? $options['force-ini-file'] : get_ini_file_location($phpinfo, $o));
 
     $errors = $o->validate();
     if (!empty($errors)) {
         usage($argv[0]);
-        fire_error($errors);
+        fire_error($errors, $o);
     }
 
     return $o;
@@ -163,7 +180,7 @@ function check_php_version($ver, $min, InstallationOptions $options)
     if (version_compare($ver, $min) >= 0) {
         inform("PHP version ${ver} >= ${min}: OK", $options);
     } else {
-        fire_error("PHP version ${min}+ is required.");
+        fire_error("PHP version ${min}+ is required.", $options);
         exit(1);
     }
 }
@@ -173,17 +190,17 @@ function check_writable($dir, InstallationOptions $options)
     if (is_writable($dir)) {
         inform("Directory ${dir} is writable: OK", $options);
     } else {
-        fire_error("Directory ${dir} is not writable.");
+        fire_error("Directory ${dir} is not writable.", $options);
     }
 }
 
-function get_arch(string $phpinfo): string
+function get_arch(string $phpinfo, InstallationOptions $options): string
 {
     $arch = preg_match('/Architecture\s+=>\s+(\w+)/i', $phpinfo, $matches)
         ? $matches[1]
         : null;
     if (!$arch) {
-        fire_error('Cannot determine OS architecture.');
+        fire_error('Cannot determine OS architecture.', $options);
     }
     return $arch;
 }
@@ -206,14 +223,14 @@ function download_archive(string $download_url, InstallationOptions $options): ?
     $tmp_file_name = $options->tmp_dir . '\\' . basename($download_url);
     if (!$options->skip_download) {
         inform("Downloading ${download_url}...", $options);
-        $f = fopen($download_url, 'r') or fire_error("Cannot download ${download_url}");
+        $f = fopen($download_url, 'r') or fire_error("Cannot download ${download_url}", $options);
         file_put_contents($tmp_file_name, $f);
         inform("Downloaded to ${tmp_file_name}", $options);
     } else {
         inform("Skipping download.", $options);
         if (!$options->skip_unpack) {
             if (!file_exists($tmp_file_name)) {
-                fire_error("File not downloaded and doesn't exist: ${tmp_file_name}");
+                fire_error("File not downloaded and doesn't exist: ${tmp_file_name}", $options);
             }
             inform("Using existing archive from ${tmp_file_name}.", $options);
         }
@@ -226,7 +243,7 @@ function extract_files(ZipArchive $archive, string $dest_folder, array $files, I
     $filenames = join(", ", $files);
     inform("Extracting files ${filenames} into {$options->tmp_dir}", $options);
     if (!$archive->extractTo($options->tmp_dir, $files)) {
-        fire_error("Failed to extract files ${filenames} into {$options->tmp_dir}");
+        fire_error("Failed to extract files ${filenames} into {$options->tmp_dir}", $options);
     }
     foreach ($files as $file) {
         $basename = basename($file);
@@ -238,11 +255,11 @@ function extract_files(ZipArchive $archive, string $dest_folder, array $files, I
                 inform("File ${target_file} already copied.", $options);
             } else {
                 if (!unlink($target_file)) {
-                    fire_error("Failed to remove ${target_file}.");
+                    fire_error("Failed to remove ${target_file}.", $options);
                 }
             }
         } else if (!copy($src_file, $target_file)) {
-            fire_error("Failed to copy ${file} into ${target_file}.");
+            fire_error("Failed to copy ${file} into ${target_file}.", $options);
         }
         if (!$options->skip_cleanup) {
             inform("Removing file ${src_file}.", $options);
@@ -266,7 +283,7 @@ function unpack_archive(string $file_name, string $folder_name, InstallationOpti
             extract_files($zip, $options->ext_dir, ["${folder_name}/php_ton_client.dll"], $options);
             $zip->close();
         } else {
-            fire_error("Failed to unpack ${file_name}");
+            fire_error("Failed to unpack ${file_name}", $options);
         }
     } else {
         inform("Skipping unpacking and installing files...", $options);
@@ -303,24 +320,24 @@ function get_php_ext_dir(): string
     return dirname(PHP_BINARY) . '\\' . ini_get('extension_dir');
 }
 
-function get_tmp_dir(): string
+function get_tmp_dir(InstallationOptions $options): string
 {
     $sys_tmp = sys_get_temp_dir();
     $time = time();
     $dir = "${sys_tmp}\\ton_client_php_ext.${time}.tmp";
     if (!is_dir($dir) && !mkdir($dir)) {
-        fire_error("Failed to create temp dir: ${dir}");
+        fire_error("Failed to create temp dir: ${dir}", $options);
     }
     return $dir;
 }
 
-function get_ini_file_location(string $phpinfo): string
+function get_ini_file_location(string $phpinfo, InstallationOptions $options): string
 {
     $location = preg_match('/Loaded\s+Configuration\s+File\s+=>\s+(.*?)[\s|$]/i', $phpinfo, $matches)
         ? $matches[1]
         : null;
     if (!$location) {
-        fire_error('Cannot determine PHP INI file location.');
+        fire_error('Cannot determine PHP INI file location.', $options);
     }
     return $location;
 }
@@ -374,6 +391,9 @@ function update_extension_location(string $extension_path, InstallationOptions $
 
 function inform(string $message, InstallationOptions $options)
 {
+    if ($options->out_file) {
+        append_to_file($options->out_file, "${message}\n");
+    }
     if (!$options->silent) {
         echo "${message}\n";
     }
