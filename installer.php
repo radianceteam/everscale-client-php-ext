@@ -719,7 +719,7 @@ class LinuxInstaller extends AbstractInstaller
     private function installExtension(string $dir): string
     {
         $sdk_dir = $this->_options->sdk_dir;
-        $ext_dir = $this->_options->ext_dir;
+	$ext_dir = $this->_options->ext_dir;
 
         if (!$this->_options->skip_build) {
             $this->verbose("Building PHP extension...");
@@ -728,7 +728,7 @@ class LinuxInstaller extends AbstractInstaller
             $this->inform("Skipping build.");
         }
 
-        $ext_file = "build/modules/ton_client.so";
+        $ext_file = "${dir}/build/modules/ton_client.so";
         if (!file_exists($ext_file)) {
             $this->error("Cannot find TON Client PHP extension file ${ext_file}.");
         }
