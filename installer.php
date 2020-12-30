@@ -64,6 +64,9 @@ EOT
         if (empty($this->version)) {
             return "Version not specified.";
         }
+        if ($this->test) {
+            return null;
+        }
         if ($this->windows) {
             if (!$this->skip_ini) {
                 if (!$this->ini_file) {
