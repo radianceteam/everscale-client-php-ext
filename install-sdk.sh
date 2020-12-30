@@ -2,7 +2,7 @@
 
 set -e
 
-SRC_DIR=$(pwd)
+SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 INSTALL_DIR=$HOME/ton-sdk
 
 if [ "$#" -ne 0 ]; then
