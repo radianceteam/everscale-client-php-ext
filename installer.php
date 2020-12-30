@@ -719,7 +719,7 @@ class LinuxInstaller extends AbstractInstaller
     private function installExtension(string $dir): string
     {
         $sdk_dir = $this->_options->sdk_dir;
-	$ext_dir = $this->_options->ext_dir;
+        $ext_dir = $this->_options->ext_dir;
 
         if (!$this->_options->skip_build) {
             $this->verbose("Building PHP extension...");
