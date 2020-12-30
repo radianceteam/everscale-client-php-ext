@@ -5,30 +5,26 @@
  PHP 7.4+
  Windows, Linux or macOS.
  
-## Windows
-
-You can install this extension on Windows using one of the following ways.
+You can install this extension using one of the following ways.
 
 ### Option 1: PHP installation script
 
-Run this script using the PHP interpreter you wish to install this extension to:
+Run this script using the PHP interpreter you wish to add this extension to:
 
 ```
-php -r "file_put_contents('windows-installer.php', fopen('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/windows-installer.php', 'r'));"^
- && php windows-installer.php -v 1.5.1 -o install.log
+php -r "file_put_contents('installer.php', fopen('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/installer.php', 'r'));"
+php installer.php -v 1.5.1
+php installer.php -v 1.5.1 -T
 ```
 
-After this, when it printed `OK` you could test installation by running this script:
+The last command is needed to test the new installation.
 
-```
-php -r "file_put_contents('test-extension.php', fopen('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/test-extension.php', 'r'));"^
- && php test-extension.php -v 1.5.1 -o test.log
-```
-
-In case of any issues please post new GitHub Issue in this repository and attach `install-errors.log` and `test-errors.log`
-files created during installation.
+In case of any issues please re-run the problematic command with additional arguments `-o install.log -V`
+and post new GitHub Issue in this repository with `install.log` file created during installation.
 
 ### Option 2: Manual steps
+
+#### Windows
 
 Download Windows binaries from [GitHub Releases](https://github.com/radianceteam/ton-client-php-ext/releases).
 
@@ -75,9 +71,9 @@ ton_client support => enabled
 ```
  - All done.
 
-## Linux/Mac
+#### Linux/Mac
 
-There's no pre-built binaries for these platform. You will need to install 
+There's no pre-built binaries for these platform. You will need to install
 extension by building it from sources, as described in [Development notes](development.md#linuxmac).
 
 ## Troubleshooting
