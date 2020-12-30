@@ -9,26 +9,26 @@
 
 You can install this extension on Windows using one of the following ways.
 
-### PHP installation script
+### Option 1: PHP installation script
 
 Run this script using the PHP interpreter you wish to install this extension to:
 
 ```
 php -r "file_put_contents('windows-installer.php', fopen('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/windows-installer.php', 'r'));"^
- && php windows-installer.php -v 1.5.0 2>install-errors.log
+ && php windows-installer.php -v 1.5.1 2>install-errors.log
 ```
 
 After this, when it printed `OK` you could test installation by running this script:
 
 ```
 php -r "file_put_contents('test-extension.php', fopen('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/test-extension.php', 'r'));"^
- && php test-extension.php -v 1.5.0 2>test-errors.log
+ && php test-extension.php -v 1.5.1 2>test-errors.log
 ```
 
 In case of any issues please post new GitHub Issue in this repository and attach `install-errors.log` and `test-errors.log`
 files created during installation.
 
-### Manual steps
+### Option 2: Manual steps
 
 Download Windows binaries from [GitHub Releases](https://github.com/radianceteam/ton-client-php-ext/releases).
 
