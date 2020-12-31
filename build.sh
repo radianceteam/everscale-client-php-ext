@@ -38,10 +38,9 @@ if [ "$#" -ne 0 ]; then
   SDK_INSTALL_DIR=$1
 fi
 
+CONFIGURE_OPTIONS=--with-ton_client=${SDK_INSTALL_DIR}
 if [ "${ENABLE_DEBUG}" -ne 0 ]; then
-  CONFIGURE_OPTIONS=--with-ton_client_debug=${SDK_INSTALL_DIR}
-else
-  CONFIGURE_OPTIONS=--with-ton_client=${SDK_INSTALL_DIR}
+  CONFIGURE_OPTIONS="${CONFIGURE_OPTIONS} --enable-ton_client_debug"
 fi
 
 rm -rf ${BUILD_DIR}

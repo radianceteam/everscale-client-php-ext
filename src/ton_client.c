@@ -24,12 +24,14 @@
 
 #define CALLBACK_QUEUE_CAPACITY 1024
 
-zend_long TON_REQUEST_NEXT_ID = 1;
+static zend_long TON_REQUEST_NEXT_ID = 1;
+static zend_llist unused_requests;
 
 typedef struct ton_request_data {
     zend_long id;
     rpa_queue_t * queue;
     bool finished;
+    bool unused;
     int last_status;
     struct ton_request_data *joined_to;
 } ton_request_data_t;
@@ -89,6 +91,10 @@ void ton_request_data_shutdown_queue(ton_request_data_t *data) {
 
 void ton_request_data_free(ton_request_data_t *data) {
     TON_DBG_MSG("in ton_request_data_free: %p\n", data);
+    if (!data->finished) {
+        TON_DBG_MSG("WARNING: request %p is not finished yet. Possible cause of segfault. Skipping.\n", data);
+        return;
+    }
     if (data->queue) {
         ton_request_data_shutdown_queue(data);
     }
@@ -105,6 +111,14 @@ void response_queueing_handler(
                 request_ptr, response_type, finished);
 
     ton_request_data_t *data = request_ptr;
+    if (data->unused) {
+        TON_DBG_MSG("request %p is not used anymore\n", request_ptr);
+        data->last_status = response_type;
+        data->finished = finished;
+        // Don't queue unused request data
+        return;
+    }
+
     ton_callback_queue_element_t *e = ton_callback_queue_element_create(
             params_json, response_type, finished, data);
 
@@ -135,7 +149,13 @@ void ton_resource_destructor(zend_resource *rsrc) /* {{{ */
     TON_DBG_MSG("in ton_resource_destructor: %p\n", rsrc->ptr);
     if (rsrc->ptr) {
         ton_request_data_t *data = (ton_request_data_t *) rsrc->ptr;
-        ton_request_data_free(data);
+        if (data->finished) {
+            ton_request_data_free(data);
+        } else {
+            TON_DBG_MSG("%p request marked as unused\n", rsrc->ptr);
+            data->unused = true;
+            zend_llist_add_element(&unused_requests, data);
+        }
         rsrc->ptr = NULL;
     }
 }
@@ -145,6 +165,7 @@ void ton_resource_destructor(zend_resource *rsrc) /* {{{ */
  */
 PHP_MINIT_FUNCTION(ton_client)
 {
+    zend_llist_init(&unused_requests, sizeof(ton_request_data_t), (llist_dtor_func_t) ton_request_data_free, 0);
     res_num = zend_register_list_destructors_ex(ton_resource_destructor, NULL, "ton_request_data_t", module_number);
     return SUCCESS;
 }
@@ -458,6 +479,16 @@ PHP_MINFO_FUNCTION(ton_client)
 }
 /* }}} */
 
+/* {{{ PHP_MSHUTDOWN_FUNCTION
+ */
+PHP_MSHUTDOWN_FUNCTION(ton_client)
+{
+    TON_DBG_MSG("cleaning up unused requests\n");
+    zend_llist_destroy(&unused_requests);
+    return SUCCESS;
+}
+/* }}} */
+
 /* {{{ arginfo
  */
 ZEND_BEGIN_ARG_INFO_EX(arginfo_ton_create_context, 0, 0, 1)
@@ -531,7 +562,7 @@ zend_module_entry ton_client_module_entry = {
     "ton_client",               /* Extension name */
     ton_client_functions,             /* zend_function_entry */
     PHP_MINIT(ton_client),            /* PHP_MINIT - Module initialization */
-    NULL,           /* PHP_MSHUTDOWN - Module shutdown */
+    PHP_MSHUTDOWN(ton_client),        /* PHP_MSHUTDOWN - Module shutdown */
     PHP_RINIT(ton_client),            /* PHP_RINIT - Request initialization */
     NULL,           /* PHP_RSHUTDOWN - Request shutdown */
     PHP_MINFO(ton_client),            /* PHP_MINFO - Module info */
