@@ -331,8 +331,11 @@ EOT
             );
 
             if (!$this->checkInstalledVersion()) {
+                $this->inform("Installing new version: {$options->version}");
                 $this->checkBeforeInstall($php_version);
                 $this->downloadAndUnpack($download_url);
+            } else {
+                $this->inform("Nothing to install.");
             }
 
             $this->inform('OK');
@@ -359,6 +362,10 @@ EOT
     {
         $options = $this->_options;
         $this->verbose("Running tests...");
+
+        if (!$this->checkInstalledVersion()) {
+            return;
+        }
 
         foreach ([
                      'ton_create_context',
@@ -505,10 +512,9 @@ EOT
         $this->inform("Previously installed version: ${version}");
         $cmp = version_compare($options->version, $version);
         if ($cmp > 0 || $options->force_install) {
-            $this->inform("Installing new version: {$options->version}");
+            $this->inform("Previously installed version is outdated.");
             return false;
         }
-        $this->inform("Nothing to install.");
         return true;
     }
 
@@ -600,7 +606,7 @@ class WindowsInstaller extends AbstractInstaller
             $src_file = $options->tmp_dir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file);
             $this->inform("Copying ${src_file} into ${target_file}...");
             if (file_exists($target_file)) {
-                if (filesize($target_file) === filesize($src_file)) {
+                if (hash_file('sha384', $target_file) === hash_file('sha384', $src_file)) {
                     $this->inform("File ${target_file} already copied.");
                 } else {
                     if (!$this->deleteFile($target_file)) {

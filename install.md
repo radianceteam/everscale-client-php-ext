@@ -13,7 +13,7 @@ Run this script using the PHP interpreter you wish to add this extension to:
 
 ```
 php -r "copy('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/master/installer.php', 'installer.php');"
-php -r "if (hash_file('sha384', 'installer.php') === 'e4cf204ea6127408c252d2addc7b533abe603cf949be32dfd35b871fea82c814684acd382cfc0b492c613280cd7e9239') { echo 'Installer verified'; } else { echo 'Installer corrupt'; } echo PHP_EOL;"
+php -r "if (hash_file('sha384', 'installer.php') === 'bb8cbfaa0bb7afc9c5045829622e5ccb71ad1a9855cfc9c1164f03e3888f76d6414846f02c655b8ead490482c5f91788') { echo 'Installer verified'; } else { echo 'Installer corrupt'; } echo PHP_EOL;"
 php installer.php -v 1.5.2
 php installer.php -v 1.5.2 -T
 ```
@@ -95,5 +95,7 @@ Fire any question to our [Telegram channel](https://t.me/RADIANCE_TON_SDK).
  
 ## Known issues
 
- - Windows users may experience "Access denied" errors when installing this extension over the already installed one (like, previous version).
-   Solution is to manually remove `ton_client.dll` from the PHP installation folder.
+ - Windows users may experience "Access denied" errors when installing this extension over the already installed one 
+   (like, previous version). Reason is that extension files cannot be removed because they are loaded by the PHP 
+   interpreter. Solution is to manually remove `ton_client.dll` and `ext\php_ton_client.dll` files from the PHP 
+   installation folder and re-run install.
