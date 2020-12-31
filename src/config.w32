@@ -1,6 +1,7 @@
 ARG_ENABLE('ton_client', 'ton_client support', 'no');
+ARG_ENABLE('ton_client_debug', 'ton_client support (debug)', 'no');
 
-if (PHP_TON_CLIENT != 'no') {
+if (PHP_TON_CLIENT != 'no' || PHP_TON_CLIENT_DEBUG != 'no') {
 
     if (CHECK_LIB("ton_client.lib", "ton_client") &&
         CHECK_LIB("pthreadVC2.lib", "ton_client") &&
@@ -8,8 +9,12 @@ if (PHP_TON_CLIENT != 'no') {
         CHECK_HEADER_ADD_INCLUDE("tonclient.h", "CFLAGS_PTHREAD")) {
 
         AC_DEFINE('HAVE_TON_CLIENT', 1, 'ton_client support enabled');
-        //AC_DEFINE('TON_DEBUG', 1);
-        //AC_DEFINE('QUEUE_DEBUG', 1);
+
+        if (PHP_TON_CLIENT_DEBUG != 'no') {
+            AC_DEFINE('TON_DEBUG', 1);
+            //AC_DEFINE('QUEUE_DEBUG', 1);
+        }
+
         EXTENSION('ton_client', 'rpa_queue.c ton_client.c', true, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /DHAVE_STRUCT_TIMESPEC=1');
 
     } else {

@@ -26,6 +26,7 @@ class InstallationOptions
     public bool $silent;
     public bool $verbose;
     public bool $test;
+    public bool $debug;
 
     private function __construct()
     {
@@ -40,6 +41,7 @@ Usage: php ${script_name}
     [-o|--output]               Write output to file.
     [-S|--silent]               Don't print too much.
     [-V|--verbose]              Print extra information.
+    [-d|--debug]                Enable debug output in extension (Linux only).
     [-D|--skip-download]        Skip downloading archive. Use existing archive from tmp dir.
     [-U|--skip-unpack]          Skip unpacking downloaded archive.
     [-C|--skip-cleanup]         Skip removing temp files.
@@ -54,7 +56,7 @@ Usage: php ${script_name}
     [-e|--force-ext-dir]        Force installing into the given EXE dir.
     [-x|--force-exe-dir]        Force installing into the given extension dir.
     [-i|--force-ini-file]       Force using the given php.ini file (Windows only).
-    [-d|--force-sdk-dir]        TON SDK installation directory (Linux only). Default: php extension directory.
+    [-k|--force-sdk-dir]        TON SDK installation directory (Linux only). Default: php extension directory.
 EOT
         );
     }
@@ -132,15 +134,17 @@ Force install: {$this->bool_str($this->force_install)}
 Silent: {$this->bool_str($this->silent)}
 Verbose: {$this->bool_str($this->verbose)}
 Test: {$this->bool_str($this->test)}
+Debug: {$this->bool_str($this->debug)}
 EOT;
     }
 
     public static function parse(array $argv): InstallationOptions
     {
-        if (!($options = getopt('hSVv:o:fDUCsa:t:e:x:i:d:hBITX', [
+        if (!($options = getopt('hSVdv:o:fDUCsa:t:e:x:i:k:hBITX', [
             'help',
             'silent',
             'verbose',
+            'debug',
             'version:',
             'output:',
             'skip-download',
@@ -186,13 +190,14 @@ EOT;
         $o->silent = isset($options['S']) || isset($options['silent']);
         $o->verbose = isset($options['V']) || isset($options['verbose']);
         $o->test = isset($options['T']) || isset($options['test-only']);
+        $o->debug = isset($options['d']) || isset($options['debug']);
         $o->ts = isset($options['s']) || isset($options['force-thread-safe']) || is_thread_safe($phpinfo);
         $o->arch = isset($options['a']) ? $options['a'] : (isset($options['force-arch']) ? $options['force-arch'] : get_arch($phpinfo));
         $o->tmp_dir = isset($options['t']) ? $options['t'] : (isset($options['force-tmp-dir']) ? $options['force-tmp-dir'] : get_tmp_dir());
         $o->ext_dir = isset($options['e']) ? $options['e'] : (isset($options['force-ext-dir']) ? $options['force-ext-dir'] : get_php_ext_dir());
         $o->exe_dir = isset($options['x']) ? $options['x'] : (isset($options['force-exe-dir']) ? $options['force-exe-dir'] : get_php_exe_dir());
         $o->ini_file = isset($options['i']) ? $options['i'] : (isset($options['force-ini-file']) ? $options['force-ini-file'] : get_ini_file_location($phpinfo));
-        $o->sdk_dir = isset($options['d']) ? $options['d'] : (isset($options['sdk-dir']) ? $options['force-sdk-dir'] : $o->ext_dir . DIRECTORY_SEPARATOR . 'ton-sdk');
+        $o->sdk_dir = isset($options['k']) ? $options['k'] : (isset($options['force-sdk-dir']) ? $options['force-sdk-dir'] : $o->ext_dir . DIRECTORY_SEPARATOR . 'ton-sdk');
         $o->ini_dir = get_ini_dir_location($phpinfo);
 
         $errors = $o->validate();
@@ -506,13 +511,13 @@ EOT
         $options = $this->_options;
         $version = phpversion('ton_client');
         if (!$version) {
-            $this->inform("No extension previously installed");
+            $this->verbose("No extension previously installed");
             return false;
         }
         $this->inform("Previously installed version: ${version}");
         $cmp = version_compare($options->version, $version);
         if ($cmp > 0 || $options->force_install) {
-            $this->inform("Previously installed version is outdated.");
+            $this->verbose("Previously installed version is outdated.");
             return false;
         }
         return true;
@@ -729,10 +734,11 @@ class LinuxInstaller extends AbstractInstaller
     {
         $sdk_dir = $this->_options->sdk_dir;
         $ext_dir = $this->_options->ext_dir;
+        $debug_arg = $this->_options->debug ? '-d' : '';
 
         if (!$this->_options->skip_build) {
             $this->verbose("Building PHP extension...");
-            system("${dir}/build.sh '${sdk_dir}'");
+            system("${dir}/build.sh ${debug_arg} '${sdk_dir}'");
         } else {
             $this->inform("Skipping build.");
         }
