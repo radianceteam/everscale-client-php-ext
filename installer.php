@@ -15,6 +15,7 @@ class InstallationOptions
     public string $ini_dir;
     public string $arch;
     public bool $windows;
+    public bool $mac;
     public bool $ts;
     public bool $force_install;
     public bool $skip_download;
@@ -178,6 +179,7 @@ EOT;
 
         $o = new InstallationOptions();
         $o->windows = is_windows($phpinfo);
+        $o->mac = is_macos($phpinfo);
         $o->version = isset($options['v']) ? $options['v'] : $options['version'];
         $o->out_file = isset($options['o']) ? $options['o'] : (isset($options['output']) ? $options['output'] : null);
         $o->skip_download = isset($options['D']) || isset($options['skip-download']);
@@ -197,7 +199,7 @@ EOT;
         $o->ext_dir = isset($options['e']) ? $options['e'] : (isset($options['force-ext-dir']) ? $options['force-ext-dir'] : get_php_ext_dir());
         $o->exe_dir = isset($options['x']) ? $options['x'] : (isset($options['force-exe-dir']) ? $options['force-exe-dir'] : get_php_exe_dir());
         $o->ini_file = isset($options['i']) ? $options['i'] : (isset($options['force-ini-file']) ? $options['force-ini-file'] : get_ini_file_location($phpinfo));
-        $o->sdk_dir = isset($options['k']) ? $options['k'] : (isset($options['force-sdk-dir']) ? $options['force-sdk-dir'] : $o->ext_dir . DIRECTORY_SEPARATOR . 'ton-sdk');
+        $o->sdk_dir = isset($options['k']) ? $options['k'] : (isset($options['force-sdk-dir']) ? $options['force-sdk-dir'] : ($o->mac ? $o->tmp_dir : $o->ext_dir) . DIRECTORY_SEPARATOR . 'ton-sdk');
         $o->ini_dir = get_ini_dir_location($phpinfo);
 
         $errors = $o->validate();
@@ -234,6 +236,14 @@ function is_windows(string $phpinfo): bool
         ? $matches[1]
         : null;
     return strpos(strtolower($system), 'windows') !== false;
+}
+
+function is_macos(string $phpinfo): bool
+{
+    $system = preg_match('/System\s+=>\s+(\w+)/i', $phpinfo, $matches)
+        ? $matches[1]
+        : null;
+    return strpos(strtolower($system), 'darwin') !== false;
 }
 
 function get_arch(string $phpinfo): string
@@ -562,6 +572,36 @@ EOT
         }
         return rmdir($dir);
     }
+
+    protected function copyFiles(string $src, string $dst): bool
+    {
+        if (is_dir($src)) {
+            $source_directory = dir($src);
+            while (FALSE !== ($entry = $source_directory->read())) {
+                if ($entry == '.' || $entry == '..') {
+                    continue;
+                }
+                $source_entry = $src . DIRECTORY_SEPARATOR . $entry;
+                if (is_dir($source_entry)) {
+                    if (!$this->copyFiles($source_entry, $dst . DIRECTORY_SEPARATOR . $entry)) {
+                        return false;
+                    }
+                    continue;
+                }
+                if (!$this->copyFiles($source_entry, $dst . DIRECTORY_SEPARATOR . $entry)) {
+                    return false;
+                }
+            }
+            $source_directory->close();
+        } else {
+            $this->verbose("Copying file ${src} to ${dst}.");
+            if (!copy($src, $dst)) {
+                $this->error("Failed to copy ${src} to ${dst}");
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 class WindowsInstaller extends AbstractInstaller
@@ -616,8 +656,8 @@ class WindowsInstaller extends AbstractInstaller
                         fire_error("Failed to remove ${target_file}.");
                     }
                 }
-            } else if (!copy($src_file, $target_file)) {
-                fire_error("Failed to copy ${file} into ${target_file}.");
+            } else {
+                $this->copyFiles($src_file, $target_file);
             }
             if (!$options->skip_cleanup) {
                 $this->deleteFile($src_file);
@@ -635,7 +675,7 @@ class WindowsInstaller extends AbstractInstaller
                 $this->inform("Backup file ${backup_file} already exists.");
             } else {
                 $this->inform("Copying {$options->ini_file} into ${backup_file}");
-                copy($options->ini_file, $backup_file);
+                $this->copyFiles($options->ini_file, $backup_file);
             }
         } else {
             $this->inform("Skipping making backup file for {$options->ini_file}.");
@@ -730,15 +770,21 @@ class LinuxInstaller extends AbstractInstaller
 
     private function installExtension(string $dir): string
     {
-        $sdk_dir = $this->_options->sdk_dir;
-        $ext_dir = $this->_options->ext_dir;
-        $debug_arg = $this->_options->debug ? '-d' : '';
+        $options = $this->_options;
+        $sdk_dir = $options->sdk_dir;
+        $ext_dir = $options->ext_dir;
+        $debug_arg = $options->debug ? '-d' : '';
 
-        if (!$this->_options->skip_build) {
+        if (!$options->skip_build) {
             $this->verbose("Building PHP extension...");
             system("${dir}/build.sh ${debug_arg} '${sdk_dir}'");
         } else {
             $this->inform("Skipping build.");
+        }
+
+        if ($options->mac) {
+            $this->verbose("Copying SDK files into ${ext_dir} (macOS only)");
+            $this->copyFiles("${sdk_dir}/lib", $ext_dir);
         }
 
         $ext_file = "${dir}/build/modules/ton_client.so";
@@ -747,7 +793,7 @@ class LinuxInstaller extends AbstractInstaller
         }
         $this->verbose("Copying extension file ${ext_file} into ${ext_dir}.");
         $ext_file_target = "${ext_dir}/ton_client.so";
-        copy($ext_file, $ext_file_target);
+        $this->copyFiles($ext_file, $ext_file_target);
         $this->inform("Extension file ${ext_file} copied into ${ext_dir}.");
 
         return $ext_file;
