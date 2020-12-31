@@ -93,3 +93,7 @@ extension by building it from sources, as described in [Development notes](devel
 
 Fire any question to our [Telegram channel](https://t.me/RADIANCE_TON_SDK).
  
+## Known issues
+
+ - Windows users may experience "Access denied" errors when installing this extension over the already installed one (like, previous version).
+   Solution is to manually remove `ton_client.dll` from the PHP installation folder.
