@@ -346,13 +346,7 @@ EOT
             $this->inform('OK');
 
         } catch (RuntimeException $e) {
-            $message = $e->getMessage();
-            if ($options->out_file) {
-                append_to_file($options->out_file, "[ERROR] {$message}");
-            }
-            if (!$options->silent) {
-                fwrite(STDERR, "${message}\n");
-            }
+            $this->handleError($e);
         } finally {
             if ($options->tmp_dir_created && !$options->skip_cleanup) {
                 $this->inform("Removing tmp dir {$options->tmp_dir}.");
@@ -365,42 +359,46 @@ EOT
 
     public final function test(): void
     {
-        $options = $this->_options;
-        $this->verbose("Running tests...");
+        try {
+            $options = $this->_options;
+            $this->verbose("Running tests...");
 
-        if (!$this->checkInstalledVersion()) {
-            return;
-        }
-
-        foreach ([
-                     'ton_create_context',
-                     'ton_destroy_context',
-                     'ton_request_sync'
-                 ] as $func) {
-            if (!function_exists($func)) {
-                $this->error("Function ${func} doesn't exist");
+            if (!$this->checkInstalledVersion()) {
+                $this->error("TON Client extension version {$options->version} is not installed.");
             }
-        }
 
-        $json = json_decode(ton_create_context("{}"), true);
-        if (!$json) {
-            $this->error("Failed to create TON context.");
-        }
+            foreach ([
+                         'ton_create_context',
+                         'ton_destroy_context',
+                         'ton_request_sync'
+                     ] as $func) {
+                if (!function_exists($func)) {
+                    $this->error("Function ${func} doesn't exist");
+                }
+            }
 
-        $contextId = $json['result'];
-        $json = ton_request_sync($contextId, 'client.version', '');
-        $response = json_decode($json, true);
-        if (!$response || !isset($response['result']) || !isset($response['result']['version'])) {
-            $this->error("Invalid response returned by client.version: ${json}.");
+            $json = json_decode(ton_create_context("{}"), true);
+            if (!$json) {
+                $this->error("Failed to create TON context.");
+            }
+
+            $contextId = $json['result'];
+            $json = ton_request_sync($contextId, 'client.version', '');
+            $response = json_decode($json, true);
+            if (!$response || !isset($response['result']) || !isset($response['result']['version'])) {
+                $this->error("Invalid response returned by client.version: ${json}.");
+            }
+            $version = $response['result']['version'];
+            $this->inform("Version returned by client.version: ${version}");
+            $cmp = version_compare($version, $options->version);
+            if ($cmp !== 0) {
+                $this->error("Wrong version returned by client.version: ${version}");
+            }
+            ton_destroy_context($contextId);
+            $this->inform('OK');
+        } catch (RuntimeException $e) {
+            $this->handleError($e);
         }
-        $version = $response['result']['version'];
-        $this->inform("Version returned by client.version: ${version}");
-        $cmp = version_compare($version, $options->version);
-        if ($cmp !== 0) {
-            $this->error("Wrong version returned by client.version: ${version}");
-        }
-        ton_destroy_context($contextId);
-        $this->inform('OK');
     }
 
     private function handleError(RuntimeException $e)
