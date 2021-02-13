@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.9)
 
-set(PHP_SRC_ROOT_DIR build/phpmaster/vc15/x64/php-src)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/phpmaster/vc15/x64/php-src")
+    set(PHP_SRC_ROOT_DIR build/phpmaster/vc15/x64/php-src)
+endif ()
 
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/phpmaster/vs16/x64/php-src")
+    set(PHP_SRC_ROOT_DIR build/phpmaster/vs16/x64/php-src)
+endif ()
+
+message("PHP_SRC_ROOT_DIR=${PHP_SRC_ROOT_DIR}")
 include_directories(${PHP_SRC_ROOT_DIR})
 include_directories(${PHP_SRC_ROOT_DIR}/main)
 include_directories(${PHP_SRC_ROOT_DIR}/Zend)

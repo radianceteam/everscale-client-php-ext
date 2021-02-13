@@ -359,17 +359,17 @@ PHP_FUNCTION(ton_request_join)
         (data2 = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res2), "ton_request_data_t", res_num)) == NULL) {
         if (data == NULL) TON_DBG_MSG("Invalid resource for $request\n");
         if (data2 == NULL) TON_DBG_MSG("Invalid resource for $request2\n");
-        RETURN_FALSE
+        RETURN_FALSE;
     }
 
     TON_DBG_MSG("ton_request_join is called for requests %p, %p\n", data, data2);
     if (!data2->joined_to) {
         data2->joined_to = data;
         TON_DBG_MSG("request %p started to receive all events of request %p\n", data, data2);
-        RETURN_TRUE
+        RETURN_TRUE;
     } else {
         TON_DBG_MSG("Request %p already used for join", data2);
-        RETURN_FALSE
+        RETURN_FALSE;
     }
 }
 /* }}}*/
@@ -391,17 +391,17 @@ PHP_FUNCTION(ton_request_disconnect)
         (data2 = (ton_request_data_t*)zend_fetch_resource(Z_RES_P(res2), "ton_request_data_t", res_num)) == NULL) {
         if (data == NULL) TON_DBG_MSG("Invalid resource for $request\n");
         if (data2 == NULL) TON_DBG_MSG("Invalid resource for $request2\n");
-        RETURN_FALSE
+        RETURN_FALSE;
     }
 
     TON_DBG_MSG("ton_request_disconnect is called for requests %p, %p\n", data, data2);
     if (data2->joined_to == data){
         data2->joined_to = NULL;
         TON_DBG_MSG("request %p disconnected from %p\n", data, data2);
-        RETURN_TRUE
+        RETURN_TRUE;
     } else {
         TON_DBG_MSG("WARNING: request %p was not joined to %p\n", data, data2);
-        RETURN_FALSE
+        RETURN_FALSE;
     }
 }
 /* }}}*/

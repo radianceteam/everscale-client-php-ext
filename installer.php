@@ -335,7 +335,7 @@ abstract class AbstractInstaller implements InstallerInterface
 
         try {
             $php_version = phpversion();
-            $download_url = $this->getDownloadUrl();
+            $download_url = $this->getDownloadUrl($php_version);
 
             $this->verbose(<<<EOT
 TON SDK {$options->version} PHP EXTENSION INSTALLER 
@@ -451,7 +451,7 @@ EOT
         $this->inform("WARNING: ${message}");
     }
 
-    protected abstract function getDownloadUrl(): string;
+    protected abstract function getDownloadUrl(string $php_version): string;
 
     /**
      * @param string $file_name Path to downloaded archive.
@@ -606,13 +606,18 @@ EOT
 
 class WindowsInstaller extends AbstractInstaller
 {
-    protected function getDownloadUrl(): string
+    protected function getDownloadUrl(string $php_version): string
     {
         $options = $this->_options;
         $suffix = $options->ts ? '' : '-nts';
         $version = $options->version;
         $arch = $options->arch;
-        return "https://github.com/radianceteam/ton-client-php-ext/releases/download/{$version}/ton-client-${version}${suffix}-Win32-vc15-${arch}.zip";
+        $suffix = '';
+        if (version_compare($version, '1.8.0') >= 0) { // PHP 7.4 only was supported before 1.8.0
+            $php_major_release = explode('.', $php_version)[0];
+            $suffix = "php${php_major_release}-";
+        }
+        return "https://github.com/radianceteam/ton-client-php-ext/releases/download/{$version}/ton-client-${suffix}${version}${suffix}-Win32-vc15-${arch}.zip";
     }
 
     protected function unpackArchive(string $file_name): void
@@ -720,7 +725,7 @@ class WindowsInstaller extends AbstractInstaller
 
 class LinuxInstaller extends AbstractInstaller
 {
-    protected function getDownloadUrl(): string
+    protected function getDownloadUrl(string $php_version): string
     {
         $version = $this->_options->version;
         return "https://github.com/radianceteam/ton-client-php-ext/archive/${version}.tar.gz";
