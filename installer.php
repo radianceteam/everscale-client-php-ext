@@ -495,6 +495,16 @@ EOT
         }
     }
 
+    function checkExtensions() {
+        $version = phpversion('openssl');
+        if ($version) {
+            $this->verbose("OpenSSL extension is enabled.");
+        } else {
+            fire_error("OpenSSL extension must be enabled.");
+            exit(1);
+        }
+    }
+
     function checkPhpVersion($ver, $min)
     {
         if (version_compare($ver, $min) >= 0) {
@@ -535,6 +545,7 @@ EOT
     {
         $options = $this->_options;
         $this->checkPhpVersion($php_version, MIN_PHP_VERSION);
+        $this->checkExtensions();
         $this->checkWritable($options->ext_dir);
         $this->checkWritable($options->exe_dir);
     }
@@ -613,11 +624,15 @@ class WindowsInstaller extends AbstractInstaller
         $version = $options->version;
         $arch = $options->arch;
         $suffix = '';
+        $vc_version = 'vc15';
         if (version_compare($version, '1.8.0') >= 0) { // PHP 7.4 only was supported before 1.8.0
             $php_major_release = explode('.', $php_version)[0];
-            $suffix = "php${php_major_release}-";
+            $suffix = "-php${php_major_release}";
         }
-        return "https://github.com/radianceteam/ton-client-php-ext/releases/download/{$version}/ton-client-${suffix}${version}${suffix}-Win32-vc15-${arch}.zip";
+        if (version_compare($php_version, '8.0.0') >= 0) {
+            $vc_version = 'vs16';
+        }
+        return "https://github.com/radianceteam/ton-client-php-ext/releases/download/{$version}/ton-client-${version}${suffix}-Win32-${vc_version}-${arch}.zip";
     }
 
     protected function unpackArchive(string $file_name): void
