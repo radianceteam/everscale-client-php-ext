@@ -12,11 +12,11 @@
  
 ## Installation
 
-See [Installation notes](INSTALL.MD).
+See [Installation notes](INSTALL.md).
 
 ## Development
 
-See [Development notes](DEVELOPMENT.MD).
+See [Development notes](DEVELOPMENT.md).
 
 ## Functions
 
