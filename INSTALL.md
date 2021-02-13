@@ -34,7 +34,7 @@ For example:
 ```
 php installer.php -v 1.8.0 -o install.log -V
 ```
-R
+
 ### Option 2: Manual steps
 
 #### Windows
