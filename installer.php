@@ -630,6 +630,9 @@ class WindowsInstaller extends AbstractInstaller
             $php_major_release = explode('.', $php_version)[0];
             $suffix = "-php${php_major_release}";
         }
+        if (!$options->ts) {
+            $suffix .= '-nts';
+        }
         if (version_compare($php_version, '8.0.0') >= 0) {
             $vc_version = 'vs16';
         }

@@ -13,7 +13,7 @@ Run this script using the PHP interpreter you wish to add this extension to:
 
 ```
 php -r "copy('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/1.8.0/installer.php', 'installer.php');"
-php -r "if (hash_file('sha384', 'installer.php') === 'b143efa682444726e52805e57634f6e68577fe51e5f4110b21298e9b8650a30ebdd855249e90b310669507e18ea67c1c') { echo 'Installer verified'; } else { echo 'Installer corrupt'; exit(1); } echo PHP_EOL;"
+php -r "if (hash_file('sha384', 'installer.php') === '03586e200bc1c87f000c5a0eea27aa688eb451a5b946579205ca918bbffda7234359e2d0e176aa53e841c6a77b8de959') { echo 'Installer verified'; } else { echo 'Installer corrupt'; exit(1); } echo PHP_EOL;"
 php installer.php -v 1.8.0
 php installer.php -v 1.8.0 -T
 ```
