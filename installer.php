@@ -408,6 +408,7 @@ EOT
             $this->inform('OK');
         } catch (RuntimeException $e) {
             $this->handleError($e);
+            exit(1);
         }
     }
 
