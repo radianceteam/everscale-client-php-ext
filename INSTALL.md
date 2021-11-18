@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* PHP 7.4+ with OpenSSL extension enabled.
+* PHP 7.4+ or 8.0+ with OpenSSL extension enabled.
 * Windows, Linux or macOS.
 * For Linux users: OpenSSL 1.1 (dev) and php-devel tools to be installed.
  
