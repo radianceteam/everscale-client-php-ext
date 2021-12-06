@@ -13,19 +13,19 @@ You can install this extension using one of the following ways.
 Run this script using the PHP interpreter you wish to add this extension to:
 
 ```
-php -r "copy('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/1.26.0/installer.php', 'installer.php');"
+php -r "copy('https://raw.githubusercontent.com/radianceteam/ton-client-php-ext/1.26.1/installer.php', 'installer.php');"
 php -r "if (hash_file('sha384', 'installer.php') === '03586e200bc1c87f000c5a0eea27aa688eb451a5b946579205ca918bbffda7234359e2d0e176aa53e841c6a77b8de959') { echo 'Installer verified'; } else { echo 'Installer corrupt'; exit(1); } echo PHP_EOL;"
-php installer.php -v 1.26.0
-php installer.php -v 1.26.0 -T
+php installer.php -v 1.26.1
+php installer.php -v 1.26.1 -T
 ```
 
 On Linux you may need to run installation step using `sudo`:
 
 ```
-sudo php installer.php -v 1.26.0
+sudo php installer.php -v 1.26.1
 ```
 
-The last command `php installer.php -v 1.26.0 -T` is to test the new installation.
+The last command `php installer.php -v 1.26.1 -T` is to test the new installation.
 
 In case of any issues please re-run the problematic command with additional arguments `-o install.log -V`
 and post new GitHub Issue in this repository with `install.log` file created during installation.
@@ -33,7 +33,7 @@ and post new GitHub Issue in this repository with `install.log` file created dur
 For example:
 
 ```
-php installer.php -v 1.26.0 -o install.log -V
+php installer.php -v 1.26.1 -o install.log -V
 ```
 
 ### Option 2: Manual steps
