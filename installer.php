@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+ini_set('memory_limit', '-1');
+
 const MIN_PHP_VERSION = '7.4';
 
 class InstallationOptions
