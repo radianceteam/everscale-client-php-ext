@@ -38,56 +38,56 @@ jobs:
           - {
             name: "PHP 7.4 Windows x64 (NTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 7.4.1 vs16 x64'",
+            build_command: "cmd.exe /c 'vs2017.bat 7.4.1 vc15 x64'",
             release_path: "build/release/x64/nts",
-            archive_suffix: "php7-nts-Win32-vs16-x64"
+            archive_suffix: "php7-nts-Win32-vc15-x64"
           }
           - {
             name: "PHP 7.4 Windows x64 (ZTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 7.4.1 vs16 x64 ZTS'",
+            build_command: "cmd.exe /c 'vs2017.bat 7.4.1 vc15 x64 ZTS'",
             release_path: "build/release/x64/zts",
-            archive_suffix: "php7-Win32-vs16-x64"
+            archive_suffix: "php7-Win32-vc15-x64"
           }
           - {
             name: "PHP 7.4 Windows x86 (NTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 7.4.1 vs16 x86'",
+            build_command: "cmd.exe /c 'vs2017.bat 7.4.1 vc15 x86'",
             release_path: "build/release/x86/nts",
-            archive_suffix: "php7-nts-Win32-vs16-x86"
+            archive_suffix: "php7-nts-Win32-vc15-x86"
           }
           - {
             name: "PHP 7.4 Windows x86 (ZTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 7.4.1 vs16 x86 ZTS'",
+            build_command: "cmd.exe /c 'vs2017.bat 7.4.1 vc15 x86 ZTS'",
             release_path: "build/release/x86/zts",
-            archive_suffix: "php7-Win32-vs16-x86"
+            archive_suffix: "php7-Win32-vc15-x86"
           }
           - {
             name: "PHP 8.0 Windows x64 (NTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 8.0.0 vs16 x64'",
+            build_command: "cmd.exe /c 'vs2019.bat 8.0.0 vs16 x64'",
             release_path: "build/release/x64/nts",
             archive_suffix: "php8-nts-Win32-vs16-x64"
           }
           - {
             name: "PHP 8.0 Windows x64 (ZTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat\" && build.bat 8.0.0 vs16 x64 ZTS'",
+            build_command: "cmd.exe /c 'vs2019.bat 8.0.0 vs16 x64 ZTS'",
             release_path: "build/release/x64/zts",
             archive_suffix: "php8-Win32-vs16-x64"
           }
           - {
             name: "PHP 8.0 Windows x86 (NTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 8.0.0 vs16 x86'",
+            build_command: "cmd.exe /c 'vs2019.bat 8.0.0 vs16 x86'",
             release_path: "build/release/x86/nts",
             archive_suffix: "php8-nts-Win32-vs16-x86"
           }
           - {
             name: "PHP 8.0 Windows x86 (ZTS)",
             os: windows-2019,
-            build_command: "cmd.exe /c '\"C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars32.bat\" && build.bat 8.0.0 vs16 x86 ZTS'",
+            build_command: "cmd.exe /c 'vs2019.bat 8.0.0 vs16 x86 ZTS'",
             release_path: "build/release/x86/zts",
             archive_suffix: "php8-Win32-vs16-x86"
           }
