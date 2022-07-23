@@ -638,7 +638,7 @@ class WindowsInstaller extends AbstractInstaller
         if (version_compare($php_version, '8.0.0') >= 0) {
             $vc_version = 'vs16';
         }
-        return "https://github.com/radianceteam/ton-client-php-ext/releases/download/{$version}/ton-client-${version}${suffix}-Win32-${vc_version}-${arch}.zip";
+        return "https://github.com/radianceteam/everscale-client-php-ext/releases/download/{$version}/ton-client-${version}${suffix}-Win32-${vc_version}-${arch}.zip";
     }
 
     protected function unpackArchive(string $file_name): void
@@ -749,7 +749,7 @@ class LinuxInstaller extends AbstractInstaller
     protected function getDownloadUrl(string $php_version): string
     {
         $version = $this->_options->version;
-        return "https://github.com/radianceteam/ton-client-php-ext/archive/${version}.tar.gz";
+        return "https://github.com/radianceteam/everscale-client-php-ext/archive/${version}.tar.gz";
     }
 
     protected function checkBeforeInstall(string $php_version)
@@ -766,7 +766,7 @@ class LinuxInstaller extends AbstractInstaller
     protected function unpackArchive(string $file_name): void
     {
         $options = $this->_options;
-        $source_dir = $options->tmp_dir . DIRECTORY_SEPARATOR . "ton-client-php-ext-{$options->version}";
+        $source_dir = $options->tmp_dir . DIRECTORY_SEPARATOR . "everscale-client-php-ext-{$options->version}";
         if (is_dir($source_dir)) {
             $this->inform("Directory ${source_dir} already exists.");
         } else if (!$options->skip_unpack) {
